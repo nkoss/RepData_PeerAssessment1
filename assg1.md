@@ -1,0 +1,108 @@
+# Reproducible Research: Peer Assessment 1
+### Neal Koss
+### Jan 18, 2015
+
+## Loading and preprocessing the data
+
+```r
+inp <- read.csv("activity.csv")
+# change the 'date' column to a date format internally
+inp$date <- as.Date(inp$date)
+```
+
+## What is mean total number of steps taken per day?
+
+```r
+# divide the 'steps' into groups based on the 'date'
+#  then get the sum of the steps for each date
+totalStepsPerDay <- sapply(split(inp$steps, inp$date), sum, na.rm=T)
+meanPerDay <- mean(totalStepsPerDay)
+medianPerDay <- median(totalStepsPerDay)
+```
+The mean total number of steps per day is 9354.2295082 and median is 10395  
+
+```r
+hist(totalStepsPerDay, col="blue")
+```
+
+![](assg1_files/figure-html/unnamed-chunk-3-1.png) 
+
+## What is the average daily activity pattern?
+
+```r
+# For each 5-minute interval (1:288), find the mean number of steps
+meanStepsPerInterval <- aggregate(steps ~ interval, data=inp, FUN=mean, na.action=na.omit)
+intervals<- unique(inp$interval)
+plot(x=intervals, y=meanStepsPerInterval$steps, type='l', col="blue", xlab='5-minute intervals', ylab='mean number of steps')
+```
+
+![](assg1_files/figure-html/unnamed-chunk-4-1.png) 
+
+```r
+# find the 5-minute interval with the maximum number of steps
+#  and how many steps in that interval
+maxInterval <- which.max(meanStepsPerInterval$steps)
+maxSteps <- meanStepsPerInterval$steps[maxInterval]
+```
+The 5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps is 104 and it contains 206.1698113 steps
+
+## Imputing missing values
+
+```r
+# Find number of rows with missing data
+missing <- nrow(inp) - nrow(na.omit(inp))
+```
+There are 2304 rows with missing data in the dataset
+
+
+```r
+# Fill in missing values (steps) with the mean steps per interval
+newInp <- inp
+for (i in 1:nrow(inp)) {
+    if (is.na(inp$steps[i]))
+        newInp$steps[i] <- meanStepsPerInterval$steps[(i %% 288) + 1]
+}
+
+# Find the 'new' total steps per day, plot and get summaries
+newTotalStepsPerDay <- sapply(split(newInp$steps, newInp$date), sum)
+hist(newTotalStepsPerDay, col="blue")
+```
+
+![](assg1_files/figure-html/unnamed-chunk-6-1.png) 
+
+```r
+newMeanPerDay <- mean(newTotalStepsPerDay)
+newMedianPerDay <- median(newTotalStepsPerDay)
+```
+The new mean number of steps per day is 1.0766189\times 10^{4}
+The new median is 1.0766189\times 10^{4}  
+
+These values are definitely different from the values using the dataset when omitting missing data. Both values are greater and the data is closer to a normal distribution since the mean and median are equal.
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+```r
+# Function to label weekend or weekday for each date
+daytype <- function(date) {
+    if (weekdays(as.Date(date)) %in% c("Saturday", "Sunday")) {
+        "weekend"
+    } else {
+        "weekday"
+    }
+}
+
+# Add the dayType as an extra column
+newInp$dayType <- as.factor(sapply(newInp$date, daytype))
+
+# Plot the weekend and weekdayinterval means
+par(mfrow=c(2,1))
+for (type in c("weekend", "weekday")) {
+    steps.type <- aggregate(steps ~ interval, data=newInp, 
+                            subset=newInp$dayType==type, FUN=mean)
+    plot(steps.type, type="l", main=type)
+}
+```
+
+![](assg1_files/figure-html/unnamed-chunk-7-1.png) 
+
+Note that on weekends the activity tends to be more spread out over time, presumably since people are available for exercise at all times since it is not a workday.
