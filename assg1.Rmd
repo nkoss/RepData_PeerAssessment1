@@ -1,0 +1,39 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+### Neal Koss
+### Jan 18, 2015
+
+## Loading and preprocessing the data
+```{r}
+inp <- read.csv("activity.csv")
+
+```
+
+## What is mean total number of steps taken per day?
+```{r}
+totalSteps <- tapply(inp$steps, inp$date, sum, simplify=TRUE)
+mean <- mean(totalSteps, na.rm=TRUE)
+median <- median(totalSteps, na.rm=TRUE)
+
+```
+The mean total number of steps per day is `r mean` and median is `r median`  
+```{r}
+hist(totalSteps)
+```
+
+## What is the average daily activity pattern?
+
+
+
+## Imputing missing values
+```{r}
+missing <- sum(is.na(inp$steps))
+
+```
+There are `r missing` missing rows in the dataset
+
+## Are there differences in activity patterns between weekdays and weekends?
